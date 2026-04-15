@@ -10,7 +10,6 @@
         body { font-family: 'IBM Plex Sans Thai', sans-serif; background-color: #f8fafc; color: #334155; }
         .classic-card { background: white; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
         
-        /* สไตล์ตัวเลขสถานะ 1-10 */
         .job-number {
             font-size: 0.8rem;
             font-weight: 700;
@@ -22,9 +21,7 @@
             border-radius: 6px;
             transition: all 0.3s;
         }
-        /* งานที่ส่งแล้ว: เลขน้ำเงิน พื้นฟ้าอ่อน */
         .is-done { color: #2563eb; background-color: #eff6ff; border: 1px solid #dbeafe; } 
-        /* งานที่ยังไม่ส่ง: เลขเทาจาง พื้นใส */
         .is-pending { color: #cbd5e1; background-color: transparent; border: 1px solid #f1f5f9; } 
         
         thead th {
@@ -37,13 +34,13 @@
         }
     </style>
 </head>
-<body class="p-4 md:p-10 text-slate-700">
+<body class="p-4 md:p-10">
     <div class="max-w-6xl mx-auto space-y-8">
         
         <div class="bg-white p-8 rounded-[2rem] border border-blue-100 shadow-sm flex flex-col md:flex-row justify-between items-center">
             <div class="text-center md:text-left">
-                <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Assignment Monitoring</h1>
-                <p class="text-blue-500 font-medium text-[10px] mt-1 uppercase tracking-[0.3em]">ระบบติดตามสถานะการส่งงานรายบุคคล</p>
+                <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Student Assignment Tracker</h1>
+                <p class="text-blue-500 font-medium text-[10px] mt-1 uppercase tracking-[0.3em]">ตรวจสอบสถานะการส่งงานรายบุคคล</p>
             </div>
             <div class="mt-6 md:mt-0 flex items-center bg-slate-50 px-6 py-3 rounded-2xl border border-slate-100">
                 <div class="text-center px-4 border-r border-slate-200">
@@ -62,35 +59,34 @@
                 <table class="w-full text-left">
                     <thead>
                         <tr>
-                            <th class="px-8 py-6">ID</th>
-                            <th class="px-8 py-6">Student Name</th>
-                            <th class="px-8 py-6 text-center">Work Progress (1-10)</th>
+                            <th class="px-8 py-6">Student ID</th>
+                            <th class="px-8 py-6">Full Name</th>
+                            <th class="px-8 py-6 text-center text-[10px]">Work Status (Job 1 - 10)</th>
                             <th class="px-8 py-6 text-center">Summary</th>
                         </tr>
                     </thead>
                     <tbody id="tbody" class="divide-y divide-slate-50 bg-white text-sm">
-                        <tr><td colspan="4" class="p-20 text-center text-slate-300 font-light italic">กำลังวิเคราะห์สถานะงาน...</td></tr>
+                        <tr><td colspan="4" class="p-20 text-center text-slate-300 font-light italic text-lg">กำลังอัปเดตข้อมูลเป็น "COMPLETE"...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
         <p class="text-center text-slate-300 text-[10px] font-bold uppercase tracking-[0.2em]">
-            Last Synchronized: <span id="syncDate" class="text-slate-400"></span>
+            Last Sync: <span id="syncDate"></span>
         </p>
     </div>
 
     <script>
         const API = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv";
 
-        // Logic ตรวจสอบคำว่า "ส่ง" แบบเคร่งครัด
-        function checkSent(val) {
+        function isSent(val) {
             if (!val) return false;
             let v = val.toString().trim();
             return v.includes("ส่ง") && !v.includes("ไม่");
         }
 
-        async function updateDashboard() {
+        async function fetchClassic() {
             try {
                 const res = await fetch(`${API}&t=${Date.now()}`);
                 const text = await res.text();
@@ -100,39 +96,39 @@
                     const id = r[0] || "";
                     const name = (r[1] || "") + " " + (r[2] || "");
                     const works = r.slice(3, 13);
-                    const statusList = works.map((w, i) => ({ n: i + 1, done: checkSent(w) }));
-                    const doneCount = statusList.filter(s => s.done).length;
-                    return { id, name, doneCount, statusList };
+                    const jobStatus = works.map((w, i) => ({ num: i + 1, done: isSent(w) }));
+                    const count = jobStatus.filter(j => j.done).length;
+                    return { id, name, count, jobStatus };
                 }).filter(s => s.id && s.id.length >= 7);
 
                 document.getElementById('totalS').innerText = students.length;
-                document.getElementById('perfectS').innerText = students.filter(s => s.doneCount === 10).length;
+                document.getElementById('perfectS').innerText = students.filter(s => s.count === 10).length;
 
                 document.getElementById('tbody').innerHTML = students.map(s => `
-                    <tr class="hover:bg-blue-50/20 transition-all duration-200">
-                        <td class="px-8 py-5 font-mono font-semibold text-blue-600/70 text-xs">${s.id}</td>
+                    <tr class="hover:bg-blue-50/20 transition-all">
+                        <td class="px-8 py-5 font-mono font-semibold text-blue-700/70 text-xs">${s.id}</td>
                         <td class="px-8 py-5 font-medium text-slate-700">${s.name}</td>
                         <td class="px-8 py-5">
                             <div class="flex justify-center gap-1.5">
-                                ${s.statusList.map(j => `
-                                    <div class="job-number ${j.done ? 'is-done' : 'is-pending'}" title="งานที่ ${j.n}">
-                                        ${j.n}
+                                ${s.jobStatus.map(j => `
+                                    <div class="job-number ${j.done ? 'is-done' : 'is-pending'}">
+                                        ${j.num}
                                     </div>
                                 `).join('')}
                             </div>
                         </td>
                         <td class="px-8 py-5 text-center">
-                            <span class="inline-block px-4 py-1.5 rounded-full text-[10px] font-bold tracking-tight ${s.doneCount === 10 ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}">
-                                ${s.doneCount === 10 ? 'COMPLETE' : s.doneCount + ' / 10'}
+                            <span class="inline-block px-4 py-1.5 rounded-full text-[10px] font-bold tracking-tight ${s.count === 10 ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-slate-100 text-slate-400 border border-slate-200 uppercase'}">
+                                ${s.count === 10 ? 'COMPLETE' : s.count + ' / 10'}
                             </span>
                         </td>
                     </tr>
                 `).join('');
-            } catch (e) { console.error("Error loading data:", e); }
+            } catch (e) { console.error(e); }
         }
 
         document.getElementById('syncDate').innerText = new Date().toLocaleString('th-TH');
-        window.onload = updateDashboard;
+        window.onload = fetchClassic;
     </script>
 </body>
 </html>
