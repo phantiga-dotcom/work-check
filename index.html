@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบเช็คการส่งงาน - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 1rem; }
+        .status-badge { padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+        .status-ok { background: #dcfce7; color: #166534; }
+        .status-no { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-bold tracking-tight text-slate-800">ClassTracker <span class="text-indigo-600 text-sm font-normal">v2.0</span></span>
+            </div>
+            <div class="flex items-center gap-4">
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileUpload(this)">
+                <button onclick="document.getElementById('csvFileInput').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+                    อัปโหลด CSV
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 mt-8">
+        <div id="welcomeScreen" class="py-20 flex flex-col items-center text-center">
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">ยินดีต้อนรับสู่ระบบเช็คงาน</h2>
+            <p class="text-slate-500">กรุณาอัปโหลดไฟล์ CSV เพื่อเริ่มต้น</p>
+        </div>
+
+        <div id="dashboardUI" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="glass-card p-6">
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">นักเรียนทั้งหมด</p>
+                    <p id="totalCount" class="text-4xl font-bold text-slate-800">-</p>
+                </div>
+                <div class="glass-card p-6 border-b-4 border-green-500">
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">ส่งครบ 100%</p>
+                    <p id="perfectCount" class="text-4xl font-bold text-slate-800">-</p>
+                </div>
+                <div class="glass-card p-6">
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">ภาพรวม</p>
+                    <p id="avgProgress" class="text-4xl font-bold text-slate-800">-%</p>
+                </div>
+                <div class="glass-card p-6 border-b-4 border-rose-500">
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-1 text-rose-600">กลุ่มเสี่ยง</p>
+                    <p id="riskCount" class="text-4xl font-bold text-slate-800">-</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-4">
+                    <div class="glass-card p-6">
+                        <h3 class="font-bold mb-4">ค้นหานักศึกษา</h3>
+                        <input type="text" id="searchInput" placeholder="รหัส หรือ ชื่อ..." class="w-full bg-slate-50 border p-3 rounded-xl outline-none" oninput="handleSearch()">
+                        <div id="searchResult" class="mt-8 hidden">
+                            <div class="text-center">
+                                <h4 id="pName" class="text-xl font-bold text-slate-800"></h4>
+                                <p id="pID" class="text-sm text-slate-400 mb-6"></p>
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div id="pBar" class="bg-indigo-600 h-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                                <p id="pPercent" class="text-xs font-bold mt-2 text-indigo-600">0%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-8">
+                    <div class="glass-card p-6 mb-6">
+                        <div class="h-[300px]"><canvas id="mainChart"></canvas></div>
+                    </div>
+                    <div id="workDetail" class="glass-card p-6 hidden">
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="workGrid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let rawData = [];
+        let chartInstance = null;
+
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => processCSV(e.target.result);
+            reader.readAsText(file);
+        }
+
+        function processCSV(text) {
+            const lines = text.split('\n').filter(l => l.trim() !== '');
+            rawData = lines.slice(1).map(line => {
+                const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+                return { id: cols[0], name: (cols[1] || '') + ' ' + (cols[2] || ''), assignments: cols.slice(3) };
+            });
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('dashboardUI').classList.remove('hidden');
+            calculateStats();
+            updateMainChart();
+        }
+
+        function calculateStats() {
+            const total = rawData.length;
+            const perfect = rawData.filter(s => s.assignments.every(a => a === 'ส่ง')).length;
+            const risk = rawData.filter(s => s.assignments.filter(a => a !== 'ส่ง').length > 5).length;
+            let totalSent = 0;
+            rawData.forEach(s => totalSent += s.assignments.filter(a => a === 'ส่ง').length);
+            const avg = total > 0 ? ((totalSent / (total * 10)) * 100).toFixed(1) : 0;
+            document.getElementById('totalCount').innerText = total;
+            document.getElementById('perfectCount').innerText = perfect;
+            document.getElementById('riskCount').innerText = risk;
+            document.getElementById('avgProgress').innerText = avg + '%';
+        }
+
+        function updateMainChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            const counts = Array(10).fill(0);
+            rawData.forEach(s => s.assignments.forEach((status, i) => { if (status === 'ส่ง' && i < 10) counts[i]++; }));
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['งาน 1', 'งาน 2', 'งาน 3', 'งาน 4', 'งาน 5', 'งาน 6', 'งาน 7', 'งาน 8', 'งาน 9', 'งาน 10'],
+                    datasets: [{ label: 'จำนวนคนส่ง', data: counts, backgroundColor: '#6366f1', borderRadius: 8 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const res = rawData.find(s => s.id.includes(query) || s.name.toLowerCase().includes(query));
+            const resultBox = document.getElementById('searchResult');
+            const workBox = document.getElementById('workDetail');
+            if (query && res) {
+                resultBox.classList.remove('hidden');
+                workBox.classList.remove('hidden');
+                document.getElementById('pName').innerText = res.name;
+                document.getElementById('pID').innerText = 'ID: ' + res.id;
+                const sent = res.assignments.filter(a => a === 'ส่ง').length;
+                const pct = (sent / 10) * 100;
+                document.getElementById('pPercent').innerText = pct + '%';
+                document.getElementById('pBar').style.width = pct + '%';
+                document.getElementById('workGrid').innerHTML = res.assignments.map((status, i) => `
+                    <div class="bg-slate-50 border p-3 rounded-xl text-center">
+                        <p class="text-[10px] text-slate-400 font-bold mb-1">ชิ้นที่ ${i+1}</p>
+                        <span class="status-badge ${status === 'ส่ง' ? 'status-ok' : 'status-no'}">${status === 'ส่ง' ? 'ส่งแล้ว' : 'ไม่ส่ง'}</span>
+                    </div>
+                `).join('');
+            } else {
+                resultBox.classList.add('hidden');
+                workBox.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
