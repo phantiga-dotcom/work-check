@@ -2,89 +2,99 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Work Checker - Classic Blue Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Checker - Luxury Classic Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { 
-            font-family: 'Kanit', sans-serif; 
-            background-color: #f0f4f8; 
-            color: #1e293b;
+            font-family: 'IBM Plex Sans Thai', sans-serif; 
+            background-color: #f8fafc; 
+            color: #334155;
         }
-        .card { 
+        .header-gradient {
+            background: linear-gradient(90deg, #1e40af 0%, #3b82f6 100%);
+        }
+        .classic-card { 
             background: white; 
-            border-radius: 1.25rem; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-radius: 1rem; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
             border: 1px solid #e2e8f0;
         }
-        .job-dot { 
+        .job-indicator { 
             width: 10px; 
             height: 10px; 
-            border-radius: 99px; 
+            border-radius: 2px; 
             display: inline-block; 
             margin: 0 2px;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
-        .job-ok { background-color: #3b82f6; box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
-        .job-miss { background-color: #e2e8f0; }
+        .job-done { background-color: #2563eb; } /* สีฟ้าคลาสสิก */
+        .job-none { background-color: #f1f5f9; border: 1px solid #e2e8f0; }
         
-        /* สไตล์ตารางให้ดูซอฟต์ */
         thead th {
             background-color: #f8fafc;
             color: #64748b;
-            font-weight: 700;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.1em;
+            font-size: 0.7rem;
         }
         tr:hover { background-color: #f1f5f9; }
+        .font-light { font-weight: 300; }
     </style>
 </head>
-<body class="p-6 md:p-12">
+<body class="p-4 md:p-10">
     <div class="max-w-6xl mx-auto space-y-8">
         
-        <div class="flex flex-col md:flex-row justify-between items-center bg-white p-8 rounded-[2rem] shadow-sm border border-blue-100">
-            <div class="text-center md:text-left">
-                <h1 class="text-3xl font-bold text-blue-900 tracking-tight">ระบบติดตามการส่งงาน</h1>
-                <p class="text-blue-500 font-medium text-sm mt-1 uppercase tracking-widest">Student Progress Monitoring Tracking</p>
+        <div class="header-gradient p-10 rounded-[1.5rem] shadow-lg text-white relative overflow-hidden">
+            <div class="relative z-10">
+                <h1 class="text-3xl font-bold tracking-tight">PROGRESS TRACKING</h1>
+                <p class="text-blue-100 font-light text-sm uppercase tracking-[0.3em] mt-2">Dashboard ติดตามสถานะการส่งงานนักศึกษา</p>
             </div>
-            <div class="mt-4 md:mt-0 px-6 py-2 bg-blue-50 rounded-full border border-blue-100">
-                <span id="updateTime" class="text-blue-600 font-bold text-sm italic"></span>
-            </div>
+            <div class="absolute right-[-20px] top-[-20px] w-40 h-40 bg-white opacity-10 rounded-full"></div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="card p-8 text-center border-t-4 border-blue-400">
-                <p class="text-slate-400 text-xs font-bold uppercase mb-2">จำนวนนักศึกษา</p>
+            <div class="classic-card p-6 flex flex-col items-center justify-center">
+                <span class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Total Students</span>
                 <p id="totalS" class="text-5xl font-bold text-slate-800">-</p>
+                <div class="w-10 h-1 bg-blue-100 mt-4"></div>
             </div>
-            <div class="card p-8 text-center border-t-4 border-blue-600">
-                <p class="text-blue-500 text-xs font-bold uppercase mb-2">ส่งครบถ้วน</p>
+            <div class="classic-card p-6 flex flex-col items-center justify-center border-b-4 border-blue-500">
+                <span class="text-blue-500 text-xs font-bold uppercase tracking-widest mb-1">Completed</span>
                 <p id="perfectS" class="text-5xl font-bold text-blue-600">-</p>
+                <div class="w-10 h-1 bg-blue-100 mt-4"></div>
             </div>
-            <div class="card p-8 text-center border-t-4 border-rose-400">
-                <p class="text-rose-500 text-xs font-bold uppercase mb-2">ยังค้างงาน</p>
+            <div class="classic-card p-6 flex flex-col items-center justify-center">
+                <span class="text-rose-400 text-xs font-bold uppercase tracking-widest mb-1">Pending</span>
                 <p id="pendingS" class="text-5xl font-bold text-rose-500">-</p>
+                <div class="w-10 h-1 bg-rose-100 mt-4"></div>
             </div>
         </div>
 
-        <div class="card overflow-hidden">
+        <div class="classic-card overflow-hidden border-none shadow-xl">
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
                         <tr>
-                            <th class="px-8 py-5 text-[11px]">รหัสนักศึกษา</th>
-                            <th class="px-8 py-5 text-[11px]">ชื่อ-นามสกุล</th>
-                            <th class="px-8 py-5 text-[11px] text-center">ความคืบหน้า (1-10)</th>
-                            <th class="px-8 py-5 text-[11px] text-center">งานที่ยังขาด</th>
-                            <th class="px-8 py-5 text-[11px] text-center">สรุปผล</th>
+                            <th class="px-8 py-5">Student ID</th>
+                            <th class="px-8 py-5">Full Name</th>
+                            <th class="px-8 py-5 text-center">Progress (1-10)</th>
+                            <th class="px-8 py-5 text-center">Missing Items</th>
+                            <th class="px-8 py-5 text-center">Score</th>
                         </tr>
                     </thead>
                     <tbody id="tbody" class="divide-y divide-slate-100 bg-white">
-                        <tr><td colspan="5" class="p-20 text-center text-slate-400 font-medium">กำลังเตรียมข้อมูลรูปแบบคลาสสิก...</td></tr>
+                        <tr><td colspan="5" class="p-20 text-center text-slate-400 font-light italic text-lg">กำลังรวบรวมข้อมูลในรูปแบบคลาสสิก...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
+
+        <p class="text-center text-slate-400 text-xs font-medium uppercase tracking-widest">
+            Last Updated: <span id="time" class="text-blue-500"></span>
+        </p>
     </div>
 
     <script>
@@ -96,7 +106,7 @@
             return v.includes("ส่ง") && !v.includes("ไม่");
         }
 
-        async function loadData() {
+        async function fetchClassic() {
             try {
                 const res = await fetch(`${API}&t=${Date.now()}`);
                 const text = await res.text();
@@ -106,40 +116,40 @@
                     const id = r[0] || "";
                     const name = (r[1] || "") + " " + (r[2] || "");
                     const works = r.slice(3, 13);
-                    const details = works.map((w, i) => ({ num: i + 1, status: isSent(w) }));
-                    const doneCount = details.filter(d => d.status).length;
-                    const missing = details.filter(d => !d.status).map(d => d.num);
-                    return { id, name, doneCount, missing, details };
+                    const jobDetails = works.map((w, i) => ({ num: i + 1, done: isSent(w) }));
+                    const count = jobDetails.filter(j => j.done).length;
+                    const missing = jobDetails.filter(j => !j.done).map(j => j.num);
+                    return { id, name, count, missing, jobDetails };
                 }).filter(s => s.id && s.id.length >= 7);
 
                 document.getElementById('totalS').innerText = students.length;
-                document.getElementById('perfectS').innerText = students.filter(s => s.doneCount === 10).length;
-                document.getElementById('pendingS').innerText = students.filter(s => s.doneCount < 10).length;
+                document.getElementById('perfectS').innerText = students.filter(s => s.count === 10).length;
+                document.getElementById('pendingS').innerText = students.filter(s => s.count < 10).length;
 
                 document.getElementById('tbody').innerHTML = students.map(s => `
                     <tr>
-                        <td class="px-8 py-5 font-mono font-bold text-blue-700">${s.id}</td>
-                        <td class="px-8 py-5 font-semibold text-slate-700">${s.name}</td>
+                        <td class="px-8 py-5 font-mono font-semibold text-blue-700 text-sm">${s.id}</td>
+                        <td class="px-8 py-5 font-medium text-slate-700">${s.name}</td>
                         <td class="px-8 py-5 text-center">
-                            <div class="flex justify-center items-center gap-1">
-                                ${s.details.map(d => `<span class="job-dot ${d.status ? 'job-ok' : 'job-miss'}"></span>`).join('')}
+                            <div class="flex justify-center items-center">
+                                ${s.jobDetails.map(j => `<span class="job-indicator ${j.done ? 'job-done' : 'job-none'}"></span>`).join('')}
                             </div>
                         </td>
                         <td class="px-8 py-5 text-center">
                             ${s.missing.length > 0 
-                                ? `<span class="text-[11px] bg-rose-50 text-rose-600 px-2 py-1 rounded-md font-bold">ขาด: ${s.missing.join(', ')}</span>` 
-                                : '<span class="text-[11px] bg-blue-50 text-blue-600 px-2 py-1 rounded-md font-bold italic">เรียบร้อย</span>'}
+                                ? `<span class="text-[10px] bg-rose-50 text-rose-600 px-3 py-1 rounded-full font-bold uppercase tracking-tighter italic">Missing: ${s.missing.join(', ')}</span>` 
+                                : '<span class="text-[10px] bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-bold uppercase tracking-tighter">Perfect</span>'}
                         </td>
                         <td class="px-8 py-5 text-center">
-                            <span class="text-lg font-bold ${s.doneCount === 10 ? 'text-blue-600' : 'text-slate-400'}">${s.doneCount}/10</span>
+                            <span class="text-xl font-bold ${s.count === 10 ? 'text-blue-600' : 'text-slate-300'}">${s.count}/10</span>
                         </td>
                     </tr>
                 `).join('');
             } catch (e) { console.error(e); }
         }
 
-        document.getElementById('updateTime').innerText = "Update: " + new Date().toLocaleDateString('th-TH');
-        window.onload = loadData;
+        document.getElementById('time').innerText = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
+        window.onload = fetchClassic;
     </script>
 </body>
 </html>
