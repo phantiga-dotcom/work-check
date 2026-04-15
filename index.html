@@ -1,97 +1,104 @@
-<title>ระบบเช็คการส่งงานอัตโนมัติ</title>
+ขออภัยจริงๆ ครับพี่ ผมเข้าใจปัญหาแล้วครับ คือพี่ใช้มือถือแล้วกล่องโค้ดสีเทาๆ ในแชทมันลากก๊อปปี้ไม่ได้เลย และระบบ "หน้าต่างขวา" (Canvas) ที่ผมพยายามเปิดให้ มันอาจจะไม่เด้งขึ้นมาในแอปฯ ที่พี่ใช้
+
+งั้นเอาวิธีที่ "บ้านๆ แต่ได้ผลที่สุด" สำหรับคนใช้มือถือครับ ผมจะส่งโค้ดแบบ "ข้อความธรรมดา" ไม่ใส่กล่องเทา ไม่ใส่สัญลักษณ์พิเศษอะไรเลย เพื่อให้พี่เอานิ้วจิ้มค้างแล้วลากคลุมได้เหมือนข้อความคุยกันปกติครับ
+
+พี่ลองก๊อปปี้ข้อความข้างล่างนี้ (เริ่มตั้งแต่บรรทัดที่เป็น <!DOCTYPE html> ไปจนจบ) แล้วเอาไปวางใน GitHub นะครับ
+
+<!DOCTYPE html>
+
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-<style>body { font-family: 'Kanit', sans-serif; background: #f1f5f9; }</style>
+<link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+<style>body{font-family:'Kanit',sans-serif;background:#f1f5f9}</style>
 </head>
-<body class="p-4 md:p-8">
-<div class="max-w-5xl mx-auto">
-<header class="flex justify-between items-center mb-8 bg-white p-4 rounded-2xl shadow-sm">
-<h1 class="text-xl font-bold text-indigo-600">ClassTracker v2.0 (Auto Sync)</h1>
-<span id="updateTime" class="text-xs text-gray-400 italic">กำลังโหลด...</span>
-</header>
+<body class="p-4">
+<div class="max-w-4xl mx-auto">
+<div class="bg-indigo-700 text-white p-6 rounded-2xl mb-6 shadow-lg">
+<h1 class="text-xl font-bold">ระบบเช็คงานอัตโนมัติ</h1>
+<p id="status" class="text-xs opacity-70 mt-1">กำลังโหลดข้อมูลจาก Google Sheets...</p>
+</div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-indigo-500">
-            <p class="text-gray-400 text-xs font-bold">นักเรียนทั้งหมด</p>
-            <p id="totalS" class="text-3xl font-bold">-</p>
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-white p-4 rounded-xl shadow text-center">
+            <p class="text-xs text-gray-400">นักเรียน</p>
+            <p id="totalS" class="text-2xl font-bold">-</p>
         </div>
-        <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-green-500">
-            <p class="text-gray-400 text-xs font-bold">ส่งครบ 10 งาน</p>
-            <p id="perfectS" class="text-3xl font-bold">-</p>
-        </div>
-        <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-orange-500">
-            <input type="text" id="searchBox" placeholder="ค้นหารหัส/ชื่อ..." class="w-full mt-1 p-2 border rounded-lg text-sm" oninput="doSearch()">
+        <div class="bg-white p-4 rounded-xl shadow text-center">
+            <p class="text-xs text-gray-400">ส่งครบ</p>
+            <p id="perfectS" class="text-2xl font-bold">-</p>
         </div>
     </div>
 
-    <div id="searchResult" class="hidden bg-indigo-50 p-6 rounded-2xl border border-indigo-100 mb-8 animate-pulse">
-        <h2 id="stName" class="text-xl font-bold text-indigo-900 mb-4"></h2>
-        <div id="stGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
+    <input type="text" id="search" oninput="doSearch()" placeholder="🔍 ค้นหารหัสหรือชื่อ..." class="w-full p-4 rounded-xl border mb-6 outline-none focus:ring-2 focus:ring-indigo-500">
+
+    <div id="res" class="hidden bg-white p-4 rounded-xl shadow-lg border-2 border-indigo-200 mb-6">
+        <h2 id="stName" class="font-bold text-center mb-4"></h2>
+        <div id="stGrid" class="grid grid-cols-5 gap-2 text-[10px] text-center"></div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-sm border">
-        <h3 class="font-bold mb-4 text-gray-500 text-sm italic">กราฟแสดงจำนวนคนส่งงานแต่ละชิ้น (Update Real-time)</h3>
-        <div class="h-[300px]"><canvas id="myChart"></canvas></div>
+    <div class="bg-white p-4 rounded-xl shadow">
+        <canvas id="chart" height="200"></canvas>
     </div>
 </div>
 
 <script>
-    const SHEET_URL = "[https://docs.google.com/spreadsheets/d/1pCXYp8EOpXOWe02uow3QKpJPvEfZxXEjorlXXvlOsOU/export?format=csv](https://docs.google.com/spreadsheets/d/1pCXYp8EOpXOWe02uow3QKpJPvEfZxXEjorlXXvlOsOU/export?format=csv)";
+    const S_ID = "1pCXYp8EOpXOWe02uow3QKpJPvEfZxXEjorlXXvlOsOU";
+    const G_ID = "1009001526";
+    const URL = `https://docs.google.com/spreadsheets/d/${S_ID}/export?format=csv&gid=${G_ID}`;
     let students = [];
-    let chart = null;
+    let myChart = null;
 
-    async function init() {
+    async function load() {
         try {
-            const r = await fetch(SHEET_URL);
+            const r = await fetch(URL);
             const t = await r.text();
-            const lines = t.split('\n').filter(l => l.trim() !== '');
-            students = lines.slice(1).map(l => {
-                const c = l.split(',').map(v => v.trim().replace(/"/g,''));
-                return { id: c[0], name: c[1]+' '+c[2], jobs: c.slice(3) };
+            const rows = t.split('\n').filter(l => l.trim());
+            students = rows.slice(1).map(row => {
+                const c = row.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                return { id: c[0], name: (c[1] || '') + (c[2] || ''), jobs: c.slice(3, 13) };
             });
-            document.getElementById('updateTime').innerText = "อัปเดต: " + new Date().toLocaleTimeString();
-            render();
-        } catch (e) { alert("เชื่อมต่อ Google Sheets ไม่ได้!"); }
+            document.getElementById('status').innerText = "✓ อัปเดตล่าสุด: " + new Date().toLocaleTimeString();
+            update();
+        } catch (e) { document.getElementById('status').innerText = "❌ โหลดข้อมูลไม่ได้"; }
     }
 
-    function render() {
+    const isOk = (v) => ['ส่ง','1','y','Y'].includes(v);
+
+    function update() {
         document.getElementById('totalS').innerText = students.length;
-        const isOk = (v) => v === 'ส่ง' || v === '1' || v === 'Y' || v === 'y';
         document.getElementById('perfectS').innerText = students.filter(s => s.jobs.every(isOk)).length;
-
-        const jobCounts = Array(10).fill(0);
-        students.forEach(s => s.jobs.forEach((v, i) => { if(isOk(v) && i < 10) jobCounts[i]++; }));
-
-        if (chart) chart.destroy();
-        chart = new Chart(document.getElementById('myChart'), {
+        const counts = Array(10).fill(0);
+        students.forEach(s => s.jobs.forEach((v, i) => { if(isOk(v)) counts[i]++; }));
+        const ctx = document.getElementById('chart').getContext('2d');
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['งาน 1','งาน 2','งาน 3','งาน 4','งาน 5','งาน 6','งาน 7','งาน 8','งาน 9','งาน 10'],
-                datasets: [{ label: 'จำนวนคนส่ง', data: jobCounts, backgroundColor: '#6366f1', borderRadius: 5 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
+                labels: [1,2,3,4,5,6,7,8,9,10].map(i => 'งาน'+i),
+                datasets: [{ label: 'คนส่ง', data: counts, backgroundColor: '#4338ca' }]
+            }
         });
     }
 
     function doSearch() {
-        const q = document.getElementById('searchBox').value.toLowerCase();
+        const q = document.getElementById('search').value.toLowerCase();
         const s = students.find(x => x.id.includes(q) || x.name.toLowerCase().includes(q));
-        const box = document.getElementById('searchResult');
-        const isOk = (v) => v === 'ส่ง' || v === '1' || v === 'Y' || v === 'y';
-        
+        const b = document.getElementById('res');
         if (q && s) {
-            box.classList.remove('hidden', 'animate-pulse');
-            document.getElementById('stName').innerText = "คุณ " + s.name + " (รหัส: " + s.id + ")";
+            b.classList.remove('hidden');
+            document.getElementById('stName').innerText = s.name;
             document.getElementById('stGrid').innerHTML = s.jobs.map((v, i) => `
-                <div class="p-3 rounded-xl border text-center ${isOk(v) ? 'bg-green-100 border-green-200 text-green-700' : 'bg-red-50 border-red-100 text-red-400'}">
-                    <div class="text-[10px] font-bold">งาน ${i+1}</div>
-                    <div class="text-xs font-bold">${isOk(v) ? '✓ ส่งแล้ว' : '✗ ขาด'}</div>
-                </div>
-            `).join('');
-        } else { box.classList.add('hidden'); }
+                <div class="p-1 border rounded ${isOk(v) ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-400'}">
+                    ง.${i+1}<br>${isOk(v) ? '✓' : '✗'}
+                </div>`).join('');
+        } else { b.classList.add('hidden'); }
     }
-    window.onload = init;
+    window.onload = load;
 </script>
 </body>
 </html>
