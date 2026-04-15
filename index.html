@@ -2,164 +2,119 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard v10.1 - Fix Data Bug</title>
+    <title>Fixed Dashboard v11.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Kanit', sans-serif; background-color: #f1f5f9; }
-        .kpi-card { background: white; border-radius: 1rem; border: 1px solid #e2e8f0; }
-        .tab-active { background-color: #4f46e5 !important; color: white !important; }
-        .progress-bar { height: 8px; border-radius: 4px; background: #e2e8f0; overflow: hidden; }
-        .progress-value { height: 100%; transition: width 0.5s ease-in-out; }
-    </style>
+    <style>body { font-family: 'Kanit', sans-serif; background: #f8fafc; }</style>
 </head>
-<body class="p-4 md:p-8">
-
+<body class="p-4 md:p-10">
     <div class="max-w-7xl mx-auto space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="kpi-card p-6 text-center shadow-sm">
+        <div class="bg-indigo-900 p-8 rounded-3xl text-white shadow-2xl">
+            <h1 class="text-3xl font-black">STUDENT TRACKER <span class="text-indigo-400">V11.0</span></h1>
+            <p class="opacity-70">ระบบตรวจสอบสถานะ (ตัดปัญหาข้อมูลขยะ 10/10)</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-slate-300">
                 <p class="text-xs font-bold text-slate-400 uppercase">นักศึกษาทั้งหมด</p>
-                <p id="totalS" class="text-3xl font-black text-slate-800">-</p>
+                <p id="totalS" class="text-4xl font-black text-slate-800">-</p>
             </div>
-            <div class="kpi-card p-6 text-center shadow-sm border-b-4 border-indigo-500">
-                <p class="text-xs font-bold text-slate-400 uppercase">% การส่งงานรวม</p>
-                <p id="avgRate" class="text-3xl font-black text-indigo-600">-</p>
-            </div>
-            <div class="kpi-card p-6 text-center shadow-sm border-b-4 border-emerald-500">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-emerald-500">
                 <p class="text-xs font-bold text-slate-400 uppercase">ส่งครบ (10 งาน)</p>
-                <p id="perfectS" class="text-3xl font-black text-emerald-600">-</p>
+                <p id="perfectS" class="text-4xl font-black text-emerald-600">-</p>
             </div>
-            <div class="kpi-card p-6 text-center shadow-sm border-b-4 border-rose-500">
-                <p class="text-xs font-bold text-slate-400 uppercase">ค้างงาน/เสี่ยง</p>
-                <p id="pendingS" class="text-3xl font-black text-rose-600">-</p>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-rose-500">
+                <p class="text-xs font-bold text-slate-400 uppercase">ยังค้างงาน</p>
+                <p id="pendingS" class="text-4xl font-black text-rose-600">-</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-amber-500">
+                <p class="text-xs font-bold text-slate-400 uppercase">อัปเดตล่าสุด</p>
+                <p id="timeS" class="text-xl font-bold text-slate-700 mt-2">-</p>
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl shadow-sm border flex flex-col md:flex-row justify-between gap-4">
-            <div class="flex flex-wrap gap-2" id="filterTabs">
-                <button onclick="changeFilter('all')" id="f-all" class="px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 tab-active">ทั้งหมด</button>
-                <button onclick="changeFilter('perfect')" id="f-perfect" class="px-4 py-2 rounded-xl text-sm font-bold bg-slate-100">ส่งครบ</button>
-                <button onclick="changeFilter('pending')" id="f-pending" class="px-4 py-2 rounded-xl text-sm font-bold bg-slate-100">ยังไม่ครบ</button>
-                <button onclick="changeFilter('critical')" id="f-critical" class="px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-rose-500">วิกฤต (<5)</button>
+        <div class="bg-white rounded-3xl shadow-sm border overflow-hidden">
+            <div class="p-6 border-b bg-slate-50 flex flex-col md:flex-row justify-between gap-4">
+                <h3 class="font-bold text-slate-700 text-lg italic">รายชื่อและสถานะความคืบหน้า</h3>
+                <input type="text" id="q" oninput="draw()" placeholder="🔍 ค้นชื่อหรือรหัส..." class="p-2 border rounded-xl w-full md:w-80 outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
-            <input type="text" id="searchInput" oninput="renderTable()" placeholder="🔍 ค้นหาชื่อหรือรหัส..." 
-                class="px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500 md:w-80">
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
             <table class="w-full text-left">
-                <thead class="bg-slate-50 text-slate-400 text-[11px] uppercase font-bold tracking-wider">
+                <thead class="bg-slate-100 text-slate-500 text-[11px] uppercase font-black">
                     <tr>
-                        <th class="px-6 py-4">อันดับ</th>
                         <th class="px-6 py-4">รหัส</th>
                         <th class="px-6 py-4">ชื่อ-นามสกุล</th>
-                        <th class="px-6 py-4">ความคืบหน้า</th>
-                        <th class="px-6 py-4 text-center">ส่งแล้ว</th>
+                        <th class="px-6 py-4 text-center">ความคืบหน้า</th>
+                        <th class="px-6 py-4 text-center">จำนวน</th>
                         <th class="px-6 py-4">สถานะ</th>
                     </tr>
                 </thead>
-                <tbody id="studentTable" class="divide-y divide-slate-100"></tbody>
+                <tbody id="tbody" class="divide-y divide-slate-100"></tbody>
             </table>
         </div>
     </div>
 
     <script>
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv";
-        let students = [];
-        let filterMode = 'all';
+        const URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv";
+        let data = [];
 
-        // ✅ ฟังก์ชันตรวจเช็ค "การส่งงาน" แบบเข้มงวด
-        function isWorkDone(val) {
-            if (!val) return false;
-            let v = val.toString().trim();
-            // ถ้าช่องนั้นเป็นค่าว่าง, เป็นเลข 0, เป็นเครื่องหมายขีด (-), หรือคำว่า "ยังไม่ส่ง"
-            if (v === "" || v === "0" || v === "-" || v === "ยังไม่ส่ง" || v === "ค้าง" || v === "0.00") {
-                return false;
-            }
-            // ถ้าเป็นตัวเลขที่มากกว่า 0 หรือมีข้อความอื่นๆ ให้นับว่าส่งแล้ว
-            return true;
-        }
-
-        async function fetchData() {
-            try {
-                const res = await fetch(`${CSV_URL}&t=${Date.now()}`);
-                const text = await res.text();
-                // แยกแถว และจัดการเรื่องเครื่องหมายอัญประกาศ
-                const rows = text.split(/\r?\n/).map(row => row.split(',').map(v => v.replace(/^"|"$/g, '').trim()));
-                
-                students = rows.slice(1).map(r => {
-                    const jobs = r.slice(3, 13);
-                    const doneCount = jobs.filter(isWorkDone).length; // ใช้ตัวเช็คตัวใหม่
-                    return {
-                        id: r[0],
-                        name: (r[1] || '') + ' ' + (r[2] || ''),
-                        count: doneCount,
-                        percent: doneCount * 10
-                    };
-                }).filter(s => s.id);
-
-                students.sort((a, b) => b.count - a.count); // จัดอันดับ Ranking
-                updateKPI();
-                renderTable();
-            } catch (err) { console.error("Data error", err); }
-        }
-
-        function updateKPI() {
-            const total = students.length;
-            const perfect = students.filter(s => s.count === 10).length;
-            let totalSent = 0;
-            students.forEach(s => totalSent += s.count);
-
-            document.getElementById('totalS').innerText = total;
-            document.getElementById('perfectS').innerText = perfect;
-            document.getElementById('pendingS').innerText = total - perfect;
-            document.getElementById('avgRate').innerText = ((totalSent / (total * 10)) * 100).toFixed(1) + "%";
-        }
-
-        function changeFilter(mode) {
-            filterMode = mode;
-            document.querySelectorAll('#filterTabs button').forEach(b => b.classList.remove('tab-active'));
-            document.getElementById('f-' + mode).classList.add('tab-active');
-            renderTable();
-        }
-
-        function renderTable() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const tbody = document.getElementById('studentTable');
+        // 🛡️ ฟังก์ชันเช็ค "ส่งงาน" ที่เข้มงวดที่สุด
+        function isSent(v) {
+            if (!v) return false;
+            let val = v.toString().trim();
+            // ❌ สิ่งที่จะ "ไม่นับ" ว่าเป็นการส่งงาน:
+            // ค่าว่าง, ขีด, เลข 0, 0.00, หรือข้อความที่แปลว่ายังไม่ส่ง
+            const blackList = ["", "-", "0", "0.00", "ยังไม่ส่ง", "ค้าง", "null", "undefined"];
+            if (blackList.includes(val)) return false;
             
-            let filtered = students;
-            if (filterMode === 'perfect') filtered = students.filter(s => s.count === 10);
-            if (filterMode === 'pending') filtered = students.filter(s => s.count < 10);
-            if (filterMode === 'critical') filtered = students.filter(s => s.count < 5);
+            // ✅ ถ้ามีความยาวมากกว่า 0 และไม่อยู่ใน Blacklist ให้ถือว่าส่ง
+            return val.length > 0;
+        }
 
-            if (search) {
-                filtered = filtered.filter(s => s.id.includes(search) || s.name.toLowerCase().includes(search));
-            }
+        async function load() {
+            try {
+                const r = await fetch(`${URL}&t=${Date.now()}`);
+                const t = await r.text();
+                const rows = t.split(/\r?\n/).map(row => row.split(',').map(c => c.replace(/^"|"$/g, '').trim()));
+                
+                data = rows.slice(1).map(r => {
+                    const jobs = r.slice(3, 13);
+                    const done = jobs.filter(isSent).length;
+                    return { id: r[0], name: r[1] + ' ' + r[2], done: done };
+                }).filter(s => s.id && s.id.length > 3); // กรองเอาเฉพาะที่มีรหัสนักศึกษาจริงๆ
 
-            tbody.innerHTML = filtered.map((s, i) => `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 text-slate-400 font-bold">#${i + 1}</td>
-                    <td class="px-6 py-4 font-mono text-xs font-bold text-indigo-600">${s.id}</td>
+                data.sort((a, b) => b.done - a.done);
+                draw();
+            } catch (e) { alert("ดึงข้อมูลไม่สำเร็จ"); }
+        }
+
+        function draw() {
+            const q = document.getElementById('q').value.toLowerCase();
+            const tbody = document.getElementById('tbody');
+            
+            const filtered = data.filter(s => s.id.includes(q) || s.name.toLowerCase().includes(q));
+            
+            document.getElementById('totalS').innerText = data.length;
+            document.getElementById('perfectS').innerText = data.filter(s => s.done === 10).length;
+            document.getElementById('pendingS').innerText = data.filter(s => s.done < 10).length;
+            document.getElementById('timeS').innerText = new Date().toLocaleTimeString();
+
+            tbody.innerHTML = filtered.map(s => `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-6 py-4 font-mono text-xs">${s.id}</td>
                     <td class="px-6 py-4 font-bold text-slate-700">${s.name}</td>
-                    <td class="px-6 py-4 w-48">
-                        <div class="progress-bar">
-                            <div class="progress-value ${s.count === 10 ? 'bg-emerald-500' : (s.count < 5 ? 'bg-rose-500' : 'bg-indigo-500')}" 
-                                 style="width: ${s.percent}%"></div>
+                    <td class="px-6 py-4">
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div class="h-full ${s.done === 10 ? 'bg-emerald-500' : (s.done < 5 ? 'bg-rose-500' : 'bg-indigo-500')}" style="width:${s.done * 10}%"></div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-center font-black text-slate-800">${s.count}/10</td>
-                    <td class="px-6 py-4">
-                        <span class="text-[10px] font-black px-3 py-1 rounded-full ${s.count === 10 ? 'bg-emerald-100 text-emerald-600' : (s.count < 5 ? 'bg-rose-100 text-rose-700' : 'bg-orange-100 text-orange-700')}">
-                            ${s.count === 10 ? 'COMPLETE' : (s.count < 5 ? 'CRITICAL' : 'PENDING')}
-                        </span>
+                    <td class="px-6 py-4 text-center font-black text-lg">${s.done}/10</td>
+                    <td class="px-6 py-4 text-[10px] font-bold ${s.done === 10 ? 'text-emerald-600' : 'text-rose-500'}">
+                        ${s.done === 10 ? '✓ ครบ' : '✗ ยังไม่ครบ'}
                     </td>
                 </tr>
             `).join('');
         }
-
-        window.onload = fetchData;
+        window.onload = load;
     </script>
 </body>
 </html>
