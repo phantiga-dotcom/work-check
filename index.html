@@ -2,135 +2,150 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard v12.0 - Final Fix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard v13.0 - Zero Bug</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Kanit', sans-serif; background: #f1f5f9; }</style>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f1f5f9; }
+        .progress-bar { height: 12px; border-radius: 6px; background: #e2e8f0; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .progress-fill { height: 100%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        tr:hover { background-color: #f8fafc; transition: 0.2s; }
+    </style>
 </head>
 <body class="p-4 md:p-10">
+
     <div class="max-w-6xl mx-auto space-y-6">
-        
-        <div class="bg-indigo-950 p-6 rounded-3xl text-white shadow-xl flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-black italic">STUDENT MONITOR <span class="text-yellow-400">V12.0</span></h1>
-                <p class="text-xs opacity-60">โหมดแก้บั๊ก 10/10: ตรวจสอบเฉพาะรหัส 7 หลักขึ้นไป และค่าที่มากกว่า 0</p>
+        <div class="bg-indigo-900 p-8 rounded-[2rem] text-white shadow-xl border-b-8 border-indigo-700">
+            <h1 class="text-3xl font-black italic tracking-tighter">CLASS MONITOR <span class="text-yellow-400 text-4xl">v13.0</span></h1>
+            <p class="opacity-70 text-sm mt-1 font-light">โหมดตรวจสอบละเอียด: ไม่นับค่า 0, ไม่นับช่องว่าง, และตัดแถวขยะทิ้งอัตโนมัติ</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">นักเรียนที่มีตัวตนจริง</p>
+                <p id="totalS" class="text-5xl font-black text-slate-800">-</p>
             </div>
-            <div class="text-right">
-                <p class="text-[10px] opacity-50 uppercase">Sync Status</p>
-                <p id="timeS" class="text-sm font-bold text-green-400">Connecting...</p>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest text-emerald-500">ส่งครบ 10 งาน</p>
+                <p id="perfectS" class="text-5xl font-black text-emerald-600">-</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest text-rose-500">ยังค้างงานอยู่</p>
+                <p id="pendingS" class="text-5xl font-black text-rose-600">-</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-slate-400">
-                <p class="text-xs font-bold text-slate-400 uppercase">รายชื่อที่พบ (ตัวตนจริง)</p>
-                <p id="totalS" class="text-4xl font-black text-slate-800">-</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-emerald-500">
-                <p class="text-xs font-bold text-slate-400 uppercase">ส่งครบจริง (10 งาน)</p>
-                <p id="perfectS" class="text-4xl font-black text-emerald-600">-</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-rose-500">
-                <p class="text-xs font-bold text-slate-400 uppercase">ยังค้างงาน (เสี่ยง)</p>
-                <p id="pendingS" class="text-4xl font-black text-rose-600">-</p>
-            </div>
+        <div class="relative group">
+            <input type="text" id="searchInput" oninput="renderData()" placeholder="🔍 ค้นหาด้วยชื่อ หรือ รหัสนักศึกษา..." 
+                class="w-full p-5 rounded-2xl border-2 border-slate-200 outline-none focus:border-indigo-500 shadow-sm transition-all text-lg font-medium">
         </div>
 
-        <div class="bg-white p-4 rounded-2xl shadow-sm border flex gap-4">
-            <input type="text" id="q" oninput="draw()" placeholder="🔍 พิมพ์ชื่อหรือรหัสเพื่อค้นหา..." class="w-full p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-            <table class="w-full text-left">
-                <thead class="bg-slate-800 text-slate-300 text-[11px] uppercase font-bold">
-                    <tr>
-                        <th class="px-6 py-4">รหัสนักศึกษา</th>
-                        <th class="px-6 py-4">ชื่อ-นามสกุล</th>
-                        <th class="px-6 py-4 text-center">ความคืบหน้า (10 ใบงาน)</th>
-                        <th class="px-6 py-4 text-center">ส่งแล้ว</th>
-                        <th class="px-6 py-4">ผลลัพธ์</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody" class="divide-y divide-slate-100">
-                    <tr><td colspan="5" class="p-10 text-center text-slate-400">กำลังโหลดข้อมูลและคัดกรองแถวว่าง...</td></tr>
-                </tbody>
-            </table>
+        <div class="bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-800 text-slate-300 text-[11px] uppercase font-black tracking-widest">
+                        <tr>
+                            <th class="px-8 py-5">อันดับ</th>
+                            <th class="px-8 py-5">รหัสนักศึกษา</th>
+                            <th class="px-8 py-5">ชื่อ-นามสกุล</th>
+                            <th class="px-8 py-5">ความคืบหน้า</th>
+                            <th class="px-8 py-5 text-center">ส่งจริง</th>
+                            <th class="px-8 py-5 text-center">สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableContent" class="divide-y divide-slate-100 bg-white">
+                        <tr><td colspan="6" class="p-20 text-center text-slate-400 font-bold animate-pulse text-xl">กำลังดึงข้อมูลจาก Sheets...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        const URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv";
-        let students = [];
+        const API_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv";
+        let masterList = [];
 
-        // 🛡️ กรองขั้นเด็ดขาด: ต้องเป็นตัวเลขที่ไม่ใช่ 0 เท่านั้น
-        function isValidWork(v) {
-            if (!v) return false;
-            let cleanV = v.toString().trim();
-            if (cleanV === "" || cleanV === "-" || cleanV === "0" || cleanV === "0.00" || cleanV === "ยังไม่ส่ง") return false;
+        // 🛡️ กรองขั้นสุด: ต้องมีค่า และค่านั้นต้องเป็นตัวเลขที่ > 0
+        function isValid(val) {
+            if (!val) return false;
+            let v = val.toString().trim();
+            if (v === "" || v === "-" || v === "0" || v === "0.00" || v === "ยังไม่ส่ง") return false;
             
-            // ถ้านำไปแปลงเป็นตัวเลขแล้วได้มากกว่า 0 ให้ผ่าน
-            let num = parseFloat(cleanV);
+            // ตรวจสอบว่าเป็นตัวเลขไหม และต้องมากกว่า 0
+            let num = parseFloat(v);
             return !isNaN(num) && num > 0;
         }
 
-        async function loadData() {
+        async function init() {
             try {
-                const r = await fetch(`${URL}&t=${Date.now()}`);
-                const t = await r.text();
-                const rows = t.split(/\r?\n/).map(row => row.split(',').map(c => c.replace(/^"|"$/g, '').trim()));
+                const response = await fetch(`${API_URL}&cache=${Date.now()}`);
+                const csvText = await response.text();
+                const rows = csvText.split(/\r?\n/).map(row => row.split(',').map(cell => cell.replace(/^"|"$/g, '').trim()));
                 
-                // กรองเฉพาะแถวที่มีรหัสนักศึกษาจริงๆ (สมมติว่ารหัสต้องมี 7 หลักขึ้นไป)
-                students = rows.slice(1).map(r => {
-                    const sid = r[0] ? r[0].trim() : "";
-                    const jobs = r.slice(3, 13);
-                    const doneCount = jobs.filter(isValidWork).length;
+                // 1. กรองแถว: ต้องมีรหัสนักศึกษาที่มีความยาวอย่างน้อย 7 หลัก (ป้องกันแถวว่าง/แถวขยะ)
+                masterList = rows.slice(1).map(r => {
+                    const sid = r[0] || "";
+                    const name = (r[1] || "") + " " + (r[2] || "");
+                    const tasks = r.slice(3, 13);
+                    const count = tasks.filter(isValid).length;
                     
-                    return {
-                        id: sid,
-                        name: (r[1] || "") + " " + (r[2] || ""),
-                        done: doneCount
-                    };
-                }).filter(s => s.id.length >= 7); // 👈 ตรงนี้จะตัด "แถวผี" ที่ทำให้กลายเป็น 100 คนออกไป
+                    return { id: sid, name: name, done: count };
+                }).filter(s => s.id.length >= 7); 
 
-                students.sort((a, b) => b.done - a.done);
-                draw();
-            } catch (e) {
-                document.getElementById('timeS').innerText = "Error!";
-                console.error(e);
+                // 2. จัดอันดับ (Ranking)
+                masterList.sort((a, b) => b.done - a.done);
+
+                renderData();
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                document.getElementById('tableContent').innerHTML = `<tr><td colspan="6" class="p-10 text-center text-rose-500 font-bold text-xl">เชื่อมต่อข้อมูลไม่ได้ พี่เช็คอินเทอร์เน็ตหน่อยครับ</td></tr>`;
             }
         }
 
-        function draw() {
-            const q = document.getElementById('q').value.toLowerCase();
-            const tbody = document.getElementById('tbody');
+        function renderData() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const tbody = document.getElementById('tableContent');
             
-            const filtered = students.filter(s => s.id.includes(q) || s.name.toLowerCase().includes(q));
+            const filtered = masterList.filter(s => s.id.includes(query) || s.name.toLowerCase().includes(query));
             
-            document.getElementById('totalS').innerText = students.length;
-            document.getElementById('perfectS').innerText = students.filter(s => s.done === 10).length;
-            document.getElementById('pendingS').innerText = students.filter(s => s.done < 10).length;
-            document.getElementById('timeS').innerText = "SUCCESS: " + new Date().toLocaleTimeString();
+            // อัปเดตตัวเลข KPI
+            document.getElementById('totalS').innerText = masterList.length;
+            document.getElementById('perfectS').innerText = masterList.filter(s => s.done === 10).length;
+            document.getElementById('pendingS').innerText = masterList.filter(s => s.done < 10).length;
 
-            tbody.innerHTML = filtered.map(s => `
-                <tr class="hover:bg-indigo-50/50 transition-colors">
-                    <td class="px-6 py-4 font-mono font-bold text-indigo-600">${s.id}</td>
-                    <td class="px-6 py-4 font-bold text-slate-700">${s.name}</td>
-                    <td class="px-6 py-4">
-                        <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden shadow-inner">
-                            <div class="h-full ${s.done === 10 ? 'bg-emerald-500' : (s.done < 5 ? 'bg-rose-500' : 'bg-amber-500')}" style="width:${s.done * 10}%"></div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-center font-black text-xl text-slate-800">${s.done}<span class="text-xs text-slate-400">/10</span></td>
-                    <td class="px-6 py-4">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${s.done === 10 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
-                            ${s.done === 10 ? 'Complete' : 'Pending'}
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-20 text-center text-slate-300 font-bold text-xl">ไม่พบข้อมูลที่ค้นหา...</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((s, index) => {
+                const isPerfect = s.done === 10;
+                const isCritical = s.done < 5;
+                return `
+                    <tr class="${isPerfect ? 'bg-emerald-50/30' : ''}">
+                        <td class="px-8 py-5 font-black text-slate-300">#${index + 1}</td>
+                        <td class="px-8 py-5 font-mono font-bold text-indigo-600 text-sm">${s.id}</td>
+                        <td class="px-8 py-5 font-bold text-slate-700">${s.name}</td>
+                        <td class="px-8 py-5 w-64">
+                            <div class="progress-bar">
+                                <div class="progress-fill ${isPerfect ? 'bg-emerald-500' : (isCritical ? 'bg-rose-500' : 'bg-indigo-500')}" 
+                                     style="width: ${s.done * 10}%"></div>
+                            </div>
+                        </td>
+                        <td class="px-8 py-5 text-center font-black text-2xl text-slate-800">${s.done}<span class="text-xs text-slate-400">/10</span></td>
+                        <td class="px-8 py-5 text-center">
+                            <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest 
+                                ${isPerfect ? 'bg-emerald-100 text-emerald-700' : (isCritical ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700')}">
+                                ${isPerfect ? 'Complete' : (isCritical ? 'Critical' : 'Pending')}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
-        window.onload = loadData;
+        window.onload = init;
     </script>
 </body>
 </html>
