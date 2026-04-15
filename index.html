@@ -2,46 +2,49 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard v14.0 - Final Bug Fix</title>
+    <title>Student Tracker v17.0 - Simple Check</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Kanit', sans-serif; background: #f1f5f9; }</style>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;900&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Kanit', sans-serif; background: #f4f7f6; }</style>
 </head>
-<body class="p-4 md:p-10">
-    <div class="max-w-6xl mx-auto space-y-6">
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto space-y-6">
         
-        <div class="bg-slate-900 p-8 rounded-3xl text-white shadow-xl">
-            <h1 class="text-3xl font-black italic">STUDENT MONITOR <span class="text-rose-500">v14.0</span></h1>
-            <p class="text-xs opacity-60">แก้ไขบั๊ก: กรองรหัสซ้ำ/แถวว่าง และนับเฉพาะคะแนนที่มากกว่า 0 เท่านั้น</p>
+        <div class="bg-indigo-800 p-6 rounded-2xl text-white shadow-lg flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black italic">CHECKER <span class="text-green-400">V17.0</span></h1>
+                <p class="text-xs opacity-80 uppercase">นับหมดถ้าช่องไม่ว่าง (ตัดแถวขยะอัตโนมัติ)</p>
+            </div>
+            <div id="status" class="text-xs font-bold">READY</div>
         </div>
 
-        <div id="summary" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-slate-400">
-                <p class="text-xs font-bold text-slate-400 uppercase">นักเรียน (ตัวจริง)</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white p-6 rounded-xl shadow border-b-4 border-slate-300">
+                <span class="text-[10px] font-bold text-slate-400 uppercase">รายชื่อนักศึกษา</span>
                 <p id="totalS" class="text-4xl font-black text-slate-800">-</p>
             </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-emerald-500">
-                <p class="text-xs font-bold text-slate-400 uppercase">ส่งครบ (10 งาน)</p>
-                <p id="perfectS" class="text-4xl font-black text-emerald-600">-</p>
+            <div class="bg-white p-6 rounded-xl shadow border-b-4 border-green-500">
+                <span class="text-[10px] font-bold text-green-500 uppercase font-black tracking-widest">ส่งครบ (10 งาน)</span>
+                <p id="perfectS" class="text-4xl font-black text-green-600">-</p>
             </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-rose-500">
-                <p class="text-xs font-bold text-slate-400 uppercase">ยังค้างงาน</p>
-                <p id="pendingS" class="text-4xl font-black text-rose-600">-</p>
+            <div class="bg-white p-6 rounded-xl shadow border-b-4 border-red-500">
+                <span class="text-[10px] font-bold text-red-500 uppercase font-black tracking-widest">ยังค้างงาน</span>
+                <p id="pendingS" class="text-4xl font-black text-red-600">-</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden border">
             <table class="w-full text-left">
-                <thead class="bg-slate-100 text-slate-500 text-[11px] uppercase font-black">
+                <thead class="bg-slate-900 text-white text-[11px] uppercase">
                     <tr>
                         <th class="px-6 py-4">รหัสนักศึกษา</th>
                         <th class="px-6 py-4">ชื่อ-นามสกุล</th>
-                        <th class="px-6 py-4 text-center">ส่งจริง</th>
+                        <th class="px-6 py-4 text-center">จำนวนงานที่ส่ง</th>
                         <th class="px-6 py-4">สถานะ</th>
                     </tr>
                 </thead>
-                <tbody id="tbody" class="divide-y divide-slate-100">
-                    <tr><td colspan="4" class="p-10 text-center animate-pulse">กำลังตรวจสอบข้อมูล...</td></tr>
+                <tbody id="tbody" class="divide-y divide-slate-100 bg-white">
+                    <tr><td colspan="4" class="p-20 text-center text-slate-400 font-bold">กำลังโหลดข้อมูล...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -50,57 +53,55 @@
     <script>
         const API = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv";
 
-        // 🛡️ ฟังก์ชันเช็คการส่งงาน: ต้องเป็นตัวเลข และต้องมากกว่า 0 เท่านั้น
-        function isWorkDone(val) {
-            if (!val) return false;
+        // ✅ Logic ง่ายๆ: ถ้ามีอะไรเขียนอยู่ (ไม่ใช่ช่องว่าง) = ส่งแล้ว
+        function hasContent(val) {
+            if (val === undefined || val === null) return false;
             let v = val.toString().trim();
-            let num = parseFloat(v);
-            // ถ้าน้อยกว่าหรือเท่ากับ 0 หรือไม่ใช่ตัวเลข = ไม่นับ
-            if (isNaN(num) || num <= 0) return false;
-            return true;
+            return v !== ""; // แค่ไม่ว่างก็นับแล้ว
         }
 
         async function load() {
             try {
                 const res = await fetch(`${API}&t=${Date.now()}`);
                 const text = await res.text();
+                // แยกแถว และ ลบเครื่องหมายคำพูดออก
                 const rows = text.split(/\r?\n/).map(row => row.split(',').map(c => c.replace(/^"|"$/g, '').trim()));
                 
                 let students = rows.slice(1).map(r => {
                     const id = r[0] || "";
                     const name = (r[1] || "") + " " + (r[2] || "");
-                    const works = r.slice(3, 13);
-                    const done = works.filter(isWorkDone).length; // ใช้ตัวกรองใหม่
-                    
+                    const works = r.slice(3, 13); // ดึงข้อมูลคอลัมน์ D ถึง M
+                    const done = works.filter(hasContent).length; // นับทุกช่องที่ไม่ว่าง
                     return { id, name, done };
                 })
-                // 🛑 กรองขั้นเด็ดขาด: รหัสต้องยาว 7 ตัวขึ้นไป และต้องไม่ใช่รหัสซ้ำ
-                .filter((s, index, self) => 
-                    s.id.length >= 7 && 
-                    self.findIndex(t => t.id === s.id) === index
-                );
+                // กรองเฉพาะคนที่มีรหัสนักศึกษา (แก้ปัญหาคนเกินเป็น 100)
+                .filter(s => s.id.length > 5);
 
+                // เรียงลำดับคนส่งเยอะไว้บน
                 students.sort((a, b) => b.done - a.done);
 
-                // แสดงผล
+                // สรุปยอด
                 document.getElementById('totalS').innerText = students.length;
                 document.getElementById('perfectS').innerText = students.filter(s => s.done === 10).length;
                 document.getElementById('pendingS').innerText = students.filter(s => s.done < 10).length;
 
+                // วาดตาราง
                 document.getElementById('tbody').innerHTML = students.map(s => `
-                    <tr>
+                    <tr class="hover:bg-slate-50">
                         <td class="px-6 py-4 font-mono font-bold text-indigo-600">${s.id}</td>
                         <td class="px-6 py-4 font-bold text-slate-700">${s.name}</td>
-                        <td class="px-6 py-4 text-center font-black text-xl">${s.done}/10</td>
+                        <td class="px-6 py-4 text-center font-black text-xl text-slate-800">${s.done}/10</td>
                         <td class="px-6 py-4">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-bold ${s.done === 10 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                                ${s.done === 10 ? 'ครบ' : 'ค้างงาน'}
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black ${s.done === 10 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${s.done === 10 ? '✓ COMPLETE' : '✗ PENDING'}
                             </span>
                         </td>
                     </tr>
                 `).join('');
-
-            } catch (e) { alert("โหลดข้อมูลพลาด!"); }
+                document.getElementById('status').innerText = "UPDATED";
+            } catch (e) {
+                document.getElementById('status').innerText = "OFFLINE";
+            }
         }
         window.onload = load;
     </script>
