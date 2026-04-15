@@ -3,113 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Work Tracker - Gemini Luxury</title>
+    <title>Work Tracker - Sarabun Classic Luxury</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { 
-            font-family: 'Inter', 'Noto Sans Thai', sans-serif; 
-            background-color: #ffffff; 
-            color: #1f1f1f;
+            font-family: 'Sarabun', sans-serif; 
+            background-color: #fcfcfc; 
+            color: #1a1a1a;
         }
-        .main-container { max-width: 1200px; margin: auto; padding: 40px 20px; }
+        .container-xl { max-width: 1200px; margin: auto; padding: 60px 20px; }
         
-        /* สไตล์ตารางแบบ Gemini: เน้นความขาวสะอาดและเส้นบาง */
-        .glass-card {
+        /* การ์ดแบบแบนแต่มีมิติด้วยขอบจาง */
+        .classic-border {
             background: #ffffff;
-            border-radius: 32px;
-            border: 1px solid #e3e3e3;
+            border-radius: 20px;
+            border: 1px solid #eeeeee;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.02);
         }
         
-        /* ขยายขนาดตัวเลข 1-10 ให้ชัดขึ้น */
-        .num-badge {
-            width: 32px;
-            height: 32px;
+        /* ปรับขนาดตัวเลข 1-10 ให้ใหญ่และคมชัด */
+        .job-box {
+            width: 34px;
+            height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 10px;
-            font-size: 0.95rem; /* ใหญ่ขึ้น */
+            border-radius: 8px;
+            font-size: 1rem;
             font-weight: 600;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
         }
-        .num-done { background: #e8f0fe; color: #1a73e8; }
-        .num-wait { background: #f1f3f4; color: #bdc1c6; }
+        .job-complete { background: #f0f7ff; color: #0056b3; border: 1px solid #d0e3ff; }
+        .job-pending { background: #fafafa; color: #d1d1d1; border: 1px solid #f0f0f0; }
 
-        /* ปุ่ม COMPLETE แบบแบนแต่ดูแพง (Flat Design) */
-        .btn-complete {
-            background: #1a73e8;
-            color: white;
-            padding: 8px 20px;
+        /* ปุ่ม COMPLETE ตัวใหญ่ ชัดเจน */
+        .status-badge {
+            padding: 10px 24px;
             border-radius: 12px;
-            font-size: 13px; /* ใหญ่ขึ้น */
-            font-weight: 600;
-            letter-spacing: 0.02em;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            display: inline-block;
         }
-        .btn-pending {
-            background: #f8f9fa;
-            color: #70757a;
-            padding: 8px 20px;
-            border-radius: 12px;
+        .bg-complete { background: #0056b3; color: #ffffff; box-shadow: 0 4px 10px rgba(0, 86, 179, 0.2); }
+        .bg-wait { background: #f5f5f5; color: #999999; border: 1px solid #e0e0e0; }
+
+        /* ปรับขนาดหัวตาราง */
+        thead th {
+            padding: 24px 40px !important;
             font-size: 13px;
-            font-weight: 500;
-            border: 1px solid #dadce0;
+            letter-spacing: 0.1em;
+            color: #888888;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
-    <div class="main-container space-y-12">
+    <div class="container-xl space-y-12">
         
-        <div class="flex flex-col md:flex-row justify-between items-end px-4">
-            <div>
-                <h1 class="text-5xl font-semibold text-gray-900 tracking-tight">Tracker</h1>
-                <p class="text-gray-500 text-lg mt-2 font-light">ติดตามการส่งงานนักศึกษา</p>
+        <div class="flex flex-col md:flex-row justify-between items-center px-4 border-b border-gray-100 pb-10">
+            <div class="text-center md:text-left">
+                <h1 class="text-5xl font-extrabold text-gray-900 tracking-tight">Assignment Tracker</h1>
+                <p class="text-gray-400 text-xl font-light mt-3">ระบบติดตามความคืบหน้าการส่งงานรายบุคคล</p>
             </div>
-            <div class="mt-8 md:mt-0 flex gap-12 bg-[#f8f9fa] p-8 rounded-[2rem]">
+            <div class="mt-8 md:mt-0 flex gap-10">
                 <div class="text-center">
-                    <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2">Students</p>
-                    <p id="totalS" class="text-4xl font-medium text-gray-900">-</p>
+                    <p id="totalS" class="text-5xl font-bold text-gray-900">-</p>
+                    <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-2">นักเรียนทั้งหมด</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-xs text-blue-600 font-bold uppercase tracking-widest mb-2">Complete</p>
-                    <p id="perfectS" class="text-4xl font-medium text-blue-600">-</p>
+                    <p id="perfectS" class="text-5xl font-bold text-blue-700">-</p>
+                    <p class="text-xs text-blue-600 font-bold uppercase tracking-widest mt-2">ส่งงานครบ</p>
                 </div>
             </div>
         </div>
 
-        <div class="glass-card overflow-hidden">
+        <div class="classic-border overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
-                    <thead class="bg-[#f8f9fa] border-b border-gray-100">
-                        <tr class="text-gray-500 text-[13px] font-bold uppercase tracking-wider">
-                            <th class="px-10 py-6">Student ID</th>
-                            <th class="px-10 py-6">Full Name</th>
-                            <th class="px-10 py-6 text-center">Progress (1-10)</th>
-                            <th class="px-10 py-6 text-center">Status</th>
+                    <thead class="bg-gray-50/50">
+                        <tr>
+                            <th class="px-10 py-6">รหัสนักศึกษา</th>
+                            <th class="px-10 py-6">ชื่อ - นามสกุล</th>
+                            <th class="px-10 py-6 text-center">สถานะงาน (1 - 10)</th>
+                            <th class="px-10 py-6 text-center">สรุปผล</th>
                         </tr>
                     </thead>
-                    <tbody id="tbody" class="divide-y divide-gray-100">
-                        <tr><td colspan="4" class="p-32 text-center text-gray-400 text-xl font-light">กำลังโหลดข้อมูล...</td></tr>
+                    <tbody id="tbody" class="divide-y divide-gray-50 bg-white">
+                        <tr><td colspan="4" class="p-40 text-center text-gray-300 text-2xl font-light italic">กำลังโหลดข้อมูล...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <p class="text-center text-gray-400 text-xs font-medium tracking-widest uppercase">
-            Synchronized at <span id="syncDate" class="text-gray-600"></span>
-        </p>
+        <div class="flex justify-between items-center px-4">
+            <p class="text-gray-300 text-xs font-bold uppercase tracking-widest">Sarabun Classic Pro v29.0</p>
+            <p class="text-gray-400 text-sm font-medium">อัปเดตล่าสุด: <span id="syncDate" class="text-blue-500"></span></p>
+        </div>
     </div>
 
     <script>
         const API = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv";
 
-        function checkStatus(val) {
+        function checkSent(val) {
             if (!val) return false;
             let v = val.toString().trim();
             return v.includes("ส่ง") && !v.includes("ไม่");
         }
 
-        async function init() {
+        async function loadData() {
             try {
                 const res = await fetch(`${API}&t=${Date.now()}`);
                 const text = await res.text();
@@ -119,30 +122,30 @@
                     const id = r[0] || "";
                     const name = (r[1] || "") + " " + (r[2] || "");
                     const works = r.slice(3, 13);
-                    const status = works.map((w, i) => ({ n: i + 1, done: checkStatus(w) }));
-                    const totalDone = status.filter(s => s.done).length;
-                    return { id, name, totalDone, status };
+                    const jobDetails = works.map((w, i) => ({ n: i + 1, done: checkSent(w) }));
+                    const count = jobDetails.filter(j => j.done).length;
+                    return { id, name, count, jobDetails };
                 }).filter(s => s.id && s.id.length >= 7);
 
                 document.getElementById('totalS').innerText = students.length;
-                document.getElementById('perfectS').innerText = students.filter(s => s.totalDone === 10).length;
+                document.getElementById('perfectS').innerText = students.filter(s => s.count === 10).length;
 
                 document.getElementById('tbody').innerHTML = students.map(s => `
-                    <tr class="hover:bg-gray-50/50 transition-all duration-200">
-                        <td class="px-10 py-8 text-sm font-semibold text-blue-600 tracking-tight">${s.id}</td>
-                        <td class="px-10 py-8 font-medium text-gray-800 text-base">${s.name}</td>
+                    <tr class="hover:bg-blue-50/20 transition-all duration-200">
+                        <td class="px-10 py-8 text-base font-bold text-blue-800 tracking-tight">${s.id}</td>
+                        <td class="px-10 py-8 font-semibold text-gray-800 text-lg">${s.name}</td>
                         <td class="px-10 py-8">
-                            <div class="flex justify-center gap-2">
-                                ${s.status.map(j => `
-                                    <div class="num-badge ${j.done ? 'num-done' : 'num-wait'}">
+                            <div class="flex justify-center gap-2.5">
+                                ${s.jobDetails.map(j => `
+                                    <div class="job-box ${j.done ? 'job-complete' : 'job-pending'}">
                                         ${j.n}
                                     </div>
                                 `).join('')}
                             </div>
                         </td>
                         <td class="px-10 py-8 text-center">
-                            <span class="${s.totalDone === 10 ? 'btn-complete' : 'btn-pending'}">
-                                ${s.totalDone === 10 ? 'COMPLETE' : s.totalDone + ' / 10'}
+                            <span class="status-badge ${s.count === 10 ? 'bg-complete' : 'bg-wait'}">
+                                ${s.count === 10 ? 'COMPLETE' : s.count + ' / 10'}
                             </span>
                         </td>
                     </tr>
@@ -151,7 +154,7 @@
         }
 
         document.getElementById('syncDate').innerText = new Date().toLocaleString('th-TH');
-        window.onload = init;
+        window.onload = loadData;
     </script>
 </body>
 </html>
