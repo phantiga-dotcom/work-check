@@ -1,100 +1,174 @@
-
-
 <!DOCTYPE html>
 
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard</title>
+<title>ระบบติดตามการส่งงาน</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
-<style>body{font-family:'Kanit',sans-serif;background:#f1f5f9}</style>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Kanit', sans-serif; background-color: #f1f5f9; }
+.card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+</style>
 </head>
-<body class="p-4">
-<div class="max-w-4xl mx-auto">
-<div class="bg-indigo-700 text-white p-6 rounded-2xl mb-6 shadow-lg">
-<h1 class="text-xl font-bold">ระบบเช็คงานอัตโนมัติ</h1>
-<p id="status" class="text-xs opacity-70 mt-1">กำลังโหลดข้อมูลจาก Google Sheets...</p>
-</div>
+<body class="p-4 md:p-8">
 
-    <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="bg-white p-4 rounded-xl shadow text-center">
-            <p class="text-xs text-gray-400">นักเรียน</p>
-            <p id="totalS" class="text-2xl font-bold">-</p>
+<div class="max-w-6xl mx-auto">
+    <header class="bg-indigo-900 text-white p-6 rounded-3xl mb-8 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight">ระบบติดตามการส่งงาน (Real-time)</h1>
+            <p id="status" class="text-xs text-indigo-300 mt-2 italic font-light">กำลังเชื่อมต่อฐานข้อมูลจาก Google Sheets...</p>
         </div>
-        <div class="bg-white p-4 rounded-xl shadow text-center">
-            <p class="text-xs text-gray-400">ส่งครบ</p>
-            <p id="perfectS" class="text-2xl font-bold">-</p>
+        <div class="w-full md:w-80">
+            <input type="text" id="search" oninput="doSearch()" placeholder="🔍 ค้นหารหัส หรือ ชื่อนักเรียน..." 
+                class="w-full p-4 rounded-2xl bg-indigo-950 border-none text-white shadow-inner focus:ring-2 focus:ring-yellow-400 outline-none transition-all">
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center">
+        <div class="card p-6 border-b-4 border-indigo-500">
+            <p class="text-slate-400 text-xs font-bold uppercase mb-2">จำนวนนักเรียนทั้งหมด</p>
+            <p id="totalS" class="text-5xl font-bold text-slate-800">-</p>
+        </div>
+        <div class="card p-6 border-b-4 border-emerald-500">
+            <p class="text-emerald-500 text-xs font-bold uppercase mb-2">ส่งงานครบ 10 ชิ้น</p>
+            <p id="perfectS" class="text-5xl font-bold text-slate-800">-</p>
+        </div>
+        <div class="card p-6 border-b-4 border-orange-500">
+            <p class="text-orange-500 text-xs font-bold uppercase mb-2">อัปเดตล่าสุดเมื่อ</p>
+            <p id="timeS" class="text-xl font-bold text-slate-700 mt-4 leading-relaxed">รอดึงข้อมูล</p>
         </div>
     </div>
 
-    <input type="text" id="search" oninput="doSearch()" placeholder="🔍 ค้นหารหัสหรือชื่อ..." class="w-full p-4 rounded-xl border mb-6 outline-none focus:ring-2 focus:ring-indigo-500">
-
-    <div id="res" class="hidden bg-white p-4 rounded-xl shadow-lg border-2 border-indigo-200 mb-6">
-        <h2 id="stName" class="font-bold text-center mb-4"></h2>
-        <div id="stGrid" class="grid grid-cols-5 gap-2 text-[10px] text-center"></div>
+    <div id="resBox" class="hidden card p-8 mb-8 border-2 border-indigo-200 shadow-xl transition-all">
+        <div class="flex justify-between items-center mb-6">
+            <h2 id="stName" class="text-2xl font-bold text-slate-800"></h2>
+            <div id="stProgress" class="bg-indigo-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-md"></div>
+        </div>
+        <div id="stGrid" class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-3"></div>
     </div>
 
-    <div class="bg-white p-4 rounded-xl shadow">
-        <canvas id="chart" height="200"></canvas>
+    <div class="card p-8 shadow-xl">
+        <h3 class="text-sm font-bold text-slate-400 mb-8 text-center uppercase tracking-[0.2em]">สถิติจำนวนคนส่งงานแต่ละใบงาน (งาน 1 - 10)</h3>
+        <div class="relative h-[450px] w-full">
+            <canvas id="mainChart"></canvas>
+        </div>
     </div>
 </div>
 
 <script>
-    const S_ID = "1pCXYp8EOpXOWe02uow3QKpJPvEfZxXEjorlXXvlOsOU";
-    const G_ID = "1009001526";
-    const URL = `https://docs.google.com/spreadsheets/d/${S_ID}/export?format=csv&gid=${G_ID}`;
-    let students = [];
-    let myChart = null;
+    // ลิงก์ข้อมูล CSV จาก Google Sheets ที่พี่ให้มาล่าสุด
+    const CSV_URL = "[https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv](https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv)";
 
-    async function load() {
+    let students = [];
+    let chart = null;
+
+    async function init() {
         try {
-            const r = await fetch(URL);
-            const t = await r.text();
-            const rows = t.split('\n').filter(l => l.trim());
-            students = rows.slice(1).map(row => {
-                const c = row.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-                return { id: c[0], name: (c[1] || '') + (c[2] || ''), jobs: c.slice(3, 13) };
+            const response = await fetch(CSV_URL);
+            const csvData = await response.text();
+            
+            // แยกแถวข้อมูล
+            const rows = csvData.split(/\r?\n/).filter(line => line.trim() !== '').map(row => {
+                const matches = row.match(/("([^"]*(?:""[^"]*)*)"|([^",\r\n]+)|(?<=,|^)(?=,|$))/g);
+                return matches ? matches.map(m => m.replace(/^"|"$/g, '').replace(/""/g, '"').trim()) : [];
             });
-            document.getElementById('status').innerText = "✓ อัปเดตล่าสุด: " + new Date().toLocaleTimeString();
-            update();
-        } catch (e) { document.getElementById('status').innerText = "❌ โหลดข้อมูลไม่ได้"; }
+
+            if (rows.length < 2) return;
+
+            // จัดการข้อมูลนักเรียน (รหัสนักศึกษา, ชื่อ-สกุล, สถานะงาน 10 ชิ้น)
+            students = rows.slice(1).map(r => ({
+                id: r[0] || "",
+                name: (r[1] || '') + ' ' + (r[2] || ''),
+                jobs: r.slice(3, 13)
+            }));
+
+            document.getElementById('status').innerText = "✓ เชื่อมต่อฐานข้อมูลสำเร็จ";
+            document.getElementById('timeS').innerText = new Date().toLocaleTimeString('th-TH');
+            
+            render();
+        } catch (err) {
+            document.getElementById('status').innerText = "❌ โหลดข้อมูลล้มเหลว (ตรวจสอบการ Publish to web)";
+        }
     }
 
-    const isOk = (v) => ['ส่ง','1','y','Y'].includes(v);
+    // เช็คคำว่า "ส่ง" จากใน Sheets ของพี่
+    const isOk = (v) => v === "ส่ง" || v === "1" || v === "y" || v === "Y";
 
-    function update() {
-        document.getElementById('totalS').innerText = students.length;
-        document.getElementById('perfectS').innerText = students.filter(s => s.jobs.every(isOk)).length;
-        const counts = Array(10).fill(0);
-        students.forEach(s => s.jobs.forEach((v, i) => { if(isOk(v)) counts[i]++; }));
-        const ctx = document.getElementById('chart').getContext('2d');
-        if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
+    function render() {
+        const total = students.length;
+        const perfect = students.filter(s => s.jobs.every(isOk)).length;
+
+        document.getElementById('totalS').innerText = total;
+        document.getElementById('perfectS').innerText = perfect;
+
+        // นับจำนวนคนส่งงานในแต่ละชิ้น (1-10)
+        const jobCounts = Array(10).fill(0);
+        students.forEach(s => {
+            s.jobs.forEach((val, idx) => { if (isOk(val)) jobCounts[idx]++; });
+        });
+
+        // สร้างกราฟแท่ง
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        if (chart) chart.destroy();
+        
+        chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: [1,2,3,4,5,6,7,8,9,10].map(i => 'งาน'+i),
-                datasets: [{ label: 'คนส่ง', data: counts, backgroundColor: '#4338ca' }]
+                labels: ['ใบงาน 1','ใบงาน 2','ใบงาน 3','ใบงาน 4','ใบงาน 5','ใบงาน 6','ใบงาน 7','ใบงาน 8','ใบงาน 9','ใบงาน 10'],
+                datasets: [{
+                    label: 'จำนวนคนส่ง (คน)',
+                    data: jobCounts,
+                    backgroundColor: 'rgba(79, 70, 229, 0.85)',
+                    borderColor: '#4338ca',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: total, // ปรับสเกลกราฟตามจำนวนนักเรียนจริง (73 คน)
+                        ticks: { 
+                            stepSize: 10,
+                            font: { size: 12 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
             }
         });
     }
 
     function doSearch() {
-        const q = document.getElementById('search').value.toLowerCase();
-        const s = students.find(x => x.id.includes(q) || x.name.toLowerCase().includes(q));
-        const b = document.getElementById('res');
-        if (q && s) {
-            b.classList.remove('hidden');
-            document.getElementById('stName').innerText = s.name;
-            document.getElementById('stGrid').innerHTML = s.jobs.map((v, i) => `
-                <div class="p-1 border rounded ${isOk(v) ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-400'}">
-                    ง.${i+1}<br>${isOk(v) ? '✓' : '✗'}
+        const query = document.getElementById('search').value.toLowerCase().trim();
+        const result = students.find(x => x.id.includes(query) || x.name.toLowerCase().includes(query));
+        const box = document.getElementById('resBox');
+        
+        if (query && result) {
+            box.classList.remove('hidden');
+            document.getElementById('stName').innerText = result.name + " (" + result.id + ")";
+            const doneCount = result.jobs.filter(isOk).length;
+            document.getElementById('stProgress').innerText = `ความคืบหน้า: ${doneCount}/10`;
+            
+            document.getElementById('stGrid').innerHTML = result.jobs.map((val, idx) => `
+                <div class="flex flex-col items-center p-3 rounded-2xl border-2 transition-all ${isOk(val) ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-500'}">
+                    <span class="text-[10px] font-bold opacity-50 mb-1">ชิ้นที่ ${idx+1}</span>
+                    <span class="text-lg font-bold">${isOk(val) ? '✓' : '✗'}</span>
                 </div>`).join('');
-        } else { b.classList.add('hidden'); }
+        } else {
+            box.classList.add('hidden');
+        }
     }
-    window.onload = load;
+
+    window.onload = init;
 </script>
 </body>
 </html>
