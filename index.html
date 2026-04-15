@@ -4,103 +4,99 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ระบบเช็คงานนักเรียน V6 (Super Live)</title>
+<title>ระบบติดตามงาน - Version สมบูรณ์ที่สุด</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-<style>body { font-family: 'Kanit', sans-serif; background: #f1f5f9; }</style>
+<style>body { font-family: 'Kanit', sans-serif; background: #f8fafc; }</style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-10">
 
-<nav class="bg-slate-900 text-white shadow-xl p-4 sticky top-0 z-50">
+<nav class="bg-indigo-900 text-white shadow-xl p-4 sticky top-0 z-50">
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 class="text-xl font-bold flex items-center gap-2">
-            <span class="bg-blue-600 px-2 py-1 rounded text-sm">LIVE</span> ระบบเช็คงานครู
-        </h1>
+        <h1 class="text-xl font-bold italic">Class Monitoring Dashboard</h1>
         <div class="flex gap-2 w-full md:w-auto">
             <input type="text" id="search" oninput="doSearch()" placeholder="🔍 ค้นหาชื่อหรือรหัส..." 
-                class="w-full md:w-64 p-2 rounded-lg bg-slate-800 border-none text-white focus:ring-2 focus:ring-blue-500 outline-none">
-            <button onclick="init()" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition">รีเฟรช</button>
+                class="w-full md:w-64 p-2 rounded-lg bg-indigo-950 border-none text-white focus:ring-2 focus:ring-yellow-400 outline-none">
         </div>
     </div>
 </nav>
 
 <main class="max-w-6xl mx-auto p-4 mt-6">
-    <div id="loadingStatus" class="text-center p-10 card bg-white rounded-2xl mb-6 shadow-sm">
-        <p class="text-slate-500 animate-bounce">กำลังดึงข้อมูลจาก Google Sheets...</p>
+    <div id="status" class="text-center p-4 mb-4 text-xs font-bold uppercase tracking-widest text-slate-400">
+        กำลังเชื่อมต่อข้อมูล...
     </div>
 
-    <div id="mainUI" class="hidden">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-500">
-                <p class="text-xs font-bold text-slate-400 uppercase">นักเรียนทั้งหมด</p>
-                <p id="totalS" class="text-4xl font-bold text-slate-800">-</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <p class="text-xs font-bold text-slate-400 uppercase">นักเรียนในคลาส</p>
+            <p id="totalS" class="text-4xl font-bold text-slate-800">-</p>
+        </div>
+        <div class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-green-500">
+            <p class="text-xs font-bold text-green-600 uppercase">ส่งครบ 10 งาน</p>
+            <p id="perfectS" class="text-4xl font-bold text-slate-800">-</p>
+        </div>
+        <div class="bg-indigo-50 p-6 rounded-3xl shadow-sm border border-indigo-100">
+            <p class="text-xs font-bold text-indigo-400 uppercase">อัปเดตล่าสุด</p>
+            <p id="timeS" class="text-lg font-bold text-indigo-900">-</p>
+        </div>
+    </div>
+
+    <div id="resBox" class="hidden bg-white p-8 rounded-3xl mb-8 border-2 border-indigo-500 shadow-2xl transition-all">
+        <div class="flex justify-between items-start mb-6 border-b pb-4">
+            <div>
+                <h2 id="stName" class="text-2xl font-bold text-slate-800"></h2>
+                <p id="stId" class="text-slate-400 italic"></p>
             </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-500">
-                <p class="text-xs font-bold text-green-600 uppercase">ส่งครบทุกงาน</p>
-                <p id="perfectS" class="text-4xl font-bold text-slate-800">-</p>
-            </div>
-            <div class="bg-slate-800 p-6 rounded-2xl shadow-sm text-white">
-                <p class="text-[10px] opacity-60 uppercase font-bold">อัปเดตล่าสุด</p>
-                <p id="timeS" class="text-lg font-bold text-blue-400">-</p>
+            <div class="text-right">
+                <p id="stCount" class="text-3xl font-black text-indigo-600"></p>
+                <p class="text-[10px] text-slate-400 uppercase font-bold">Progress</p>
             </div>
         </div>
+        <div id="stGrid" class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2"></div>
+    </div>
 
-        <div id="resBox" class="hidden bg-white p-6 rounded-2xl mb-8 border-2 border-blue-400 shadow-xl">
-            <div class="flex justify-between items-end mb-4 border-b pb-4">
-                <div>
-                    <h2 id="stName" class="text-xl font-bold text-slate-800"></h2>
-                    <p id="stId" class="text-sm text-slate-400"></p>
-                </div>
-                <p id="stCount" class="text-2xl font-black text-blue-600"></p>
-            </div>
-            <div id="stGrid" class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2 text-center text-[10px]"></div>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <h3 class="text-xs font-bold text-slate-400 mb-6 text-center uppercase tracking-widest">ภาพรวมจำนวนคนส่งงานในแต่ละใบงาน</h3>
-            <div style="height:350px; position: relative;">
-                <canvas id="mainChart"></canvas>
-            </div>
+    <div class="bg-white p-8 rounded-3xl shadow-lg border border-slate-100">
+        <h3 class="text-center font-bold text-slate-400 text-sm uppercase mb-8 tracking-tighter italic">สถิติจำนวนคนส่งงานแต่ละใบงาน (เป้าหมาย 73 คน)</h3>
+        <div style="height:400px; position: relative;">
+            <canvas id="mainChart"></canvas>
         </div>
     </div>
 </main>
 
 <script>
-    // ลิงก์ของพี่ที่เช็คแล้วว่า Publish เป็น CSV
     const URL = "[https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv](https://docs.google.com/spreadsheets/d/e/2PACX-1vTu7wMeochYCSvxw1dAubtzBLF2SeMpIIA6rplVOH9ze_vbgyXpTllDJqRVnBAEa7ndTzow19nY5eJi/pub?gid=1009001526&output=csv)";
-
     let students = [];
     let chart = null;
 
     async function init() {
         try {
-            const res = await fetch(URL + '&t=' + new Date().getTime());
+            const res = await fetch(URL + '&cache=' + Math.random());
             const text = await res.text();
             const rows = text.split(/\r?\n/).filter(line => line.trim() !== '').map(row => {
-                const m = row.match(/("([^"]*(?:""[^"]*)*)"|([^",\r\n]+)|(?<=,|^)(?=,|$))/g);
-                return m ? m.map(v => v.replace(/^"|"$/g, '').replace(/""/g, '"').trim()) : [];
+                return row.split(',').map(v => v.replace(/^"|"$/g, '').trim());
             });
 
-            if (rows.length < 2) throw new Error("No data found");
+            if (rows.length < 2) return;
 
-            // ดักจับข้อมูล: หาตำแหน่งคอลัมน์ว่างานเริ่มที่ตรงไหน
+            // ระบบ Auto-Detect: ค้นหาว่าคอลัมน์ไหนคือ "งาน" 
+            // โดยเริ่มนับงานจากคอลัมน์ที่ 4 เป็นต้นไป
             students = rows.slice(1).map(r => ({
-                id: r[0] || "ไม่ระบุ",
+                id: r[0],
                 name: (r[1] || '') + ' ' + (r[2] || ''),
-                jobs: r.slice(3, 13) // เอางาน 10 ช่องแรกหลังจากชื่อ
+                jobs: r.slice(3, 13) // ดึงงานมา 10 ชิ้น
             }));
 
-            document.getElementById('loadingStatus').classList.add('hidden');
-            document.getElementById('mainUI').classList.remove('hidden');
+            document.getElementById('status').innerText = "✓ ข้อมูลซิงค์สำเร็จ";
             document.getElementById('timeS').innerText = new Date().toLocaleTimeString('th-TH');
             render();
         } catch (e) {
-            document.getElementById('loadingStatus').innerHTML = `<p class="text-red-500 font-bold font-kanit">❌ โหลดข้อมูลไม่สำเร็จ<br><small class="text-slate-400 font-normal">สาเหตุ: ลิงก์ Google Sheets อาจยังไม่เปิด Publish to web เป็น CSV</small></p>`;
+            document.getElementById('status').innerText = "❌ ดึงข้อมูลไม่ได้";
         }
     }
 
-    const isOk = (v) => v && (v.includes("ส่ง") || v === "1" || v.toLowerCase() === "y" || v.toLowerCase() === "ok");
+    // เช็คคำว่า "ส่ง" หรือ "1"
+    const isOk = (v) => v && (v.includes("ส่ง") || v === "1" || v.toLowerCase() === "y");
 
     function render() {
         const total = students.length;
@@ -117,12 +113,18 @@
             type: 'bar',
             data: {
                 labels: ['งาน 1','งาน 2','งาน 3','งาน 4','งาน 5','งาน 6','งาน 7','งาน 8','งาน 9','งาน 10'],
-                datasets: [{ label: 'จำนวนคนส่ง (คน)', data: counts, backgroundColor: '#3b82f6', borderRadius: 6 }]
+                datasets: [{ label: 'จำนวนคนส่ง (คน)', data: counts, backgroundColor: '#4f46e5', borderRadius: 10 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, suggestedMax: total, ticks: { stepSize: 10 } } },
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        max: 80, // ล็อคสเกลไว้ที่ 80 เลยเพื่อให้เห็นความสูงแท่งชัดเจน
+                        ticks: { stepSize: 10 } 
+                    } 
+                },
                 plugins: { legend: { display: false } }
             }
         });
@@ -135,12 +137,13 @@
         if (q && s) {
             box.classList.remove('hidden');
             document.getElementById('stName').innerText = s.name;
-            document.getElementById('stId').innerText = "รหัส: " + s.id;
+            document.getElementById('stId').innerText = "รหัสนักศึกษา: " + s.id;
             const done = s.jobs.filter(isOk).length;
             document.getElementById('stCount').innerText = done + "/10";
             document.getElementById('stGrid').innerHTML = s.jobs.map((v, i) => `
-                <div class="p-2 rounded-lg border ${isOk(v) ? 'bg-green-50 border-green-200 text-green-600' : 'bg-red-50 border-red-100 text-red-400 opacity-40'}">
-                    งาน ${i+1}<br><b>${isOk(v) ? '✓' : '✗'}</b>
+                <div class="p-3 rounded-xl border-2 ${isOk(v) ? 'bg-green-50 border-green-200 text-green-600' : 'bg-red-50 border-red-100 text-red-500 opacity-40'}">
+                    <p class="text-[8px] font-bold uppercase">ใบงาน ${i+1}</p>
+                    <p class="text-xl font-bold">${isOk(v) ? '✓' : '✗'}</p>
                 </div>`).join('');
         } else { box.classList.add('hidden'); }
     }
